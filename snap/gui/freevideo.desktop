@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=FreeVideo
+Comment=Create AI videos with FreeVideo
+Exec=freevideo
+Icon=${SNAP}/meta/gui/freevideo.png
+Terminal=false
+Categories=AudioVideo;Video;
+StartupWMClass=FreeVideo

@@ -1,0 +1,61 @@
+--- a/freevideo_engine/linux_process_host.py
++++ b/freevideo_engine/linux_process_host.py
+@@ -13,7 +13,15 @@
+ 
+ 
+ def children():
+-    return [int(pid) for pid in Path('/proc/self/task/%d/children' % os.getpid()).read_text().split()]
++    result = []
++    for stat in Path('/proc').glob('[0-9]*/stat'):
++        try:
++            fields = stat.read_text().rsplit(')', 1)[1].split()
++            if int(fields[1]) == os.getpid():
++                result.append(int(stat.parent.name))
++        except (OSError, ValueError, IndexError):
++            continue
++    return result
+ 
+ 
+ def cleanup():
+--- a/freevideo_engine/comfy_service.py
++++ b/freevideo_engine/comfy_service.py
+@@ -637,6 +637,8 @@
+ 
+ 
+ def shortcuts(root, source, out=say):
++    if os.environ.get('SNAP'):
++        return
+     wrapper = write_wrapper(root, source)
+     if wrapper['status'] == 'created':
+         out('Added the freevideo command: %s' % wrapper['path'])
+@@ -812,6 +814,8 @@
+ 
+ def server_command(root, *, listen='127.0.0.1', port=None, tls=None, renew=False, foreground=False,
+                    enable=False, disable=False, force=False, out=say):
++    if os.environ.get('SNAP') and (enable or disable):
++        raise ValueError('User service installation is unavailable in the snap.')
+     if disable:
+         disable_unit(out=out)
+         return 0
+--- a/freevideo_engine/launcher_session.py
++++ b/freevideo_engine/launcher_session.py
+@@ -2439,7 +2439,7 @@
+             archives_dialog=archive_dialog, archives_busy=self.archives_busy, can_delete_archives=archives_idle,
+             archives_toast=(self.t('Freed %s', '已释放 %s') % self.archive_size(self.archives_freed)
+                             if self.archives_freed and time.monotonic() < self.archives_toast_until else ''),
+-            can_shortcut=bool(self.controller.selection and self.controller.selection.get('ready')),
++            can_shortcut=not os.environ.get('SNAP') and bool(self.controller.selection and self.controller.selection.get('ready')),
+             update=update, engine_update_available=bool(row.get('engine_update_available')),
+             settings_path=str(self.store.primary),
+             review_id=row.get('plan', {}).get('plan_id', ''),
+--- a/freevideo_engine/modern_launcher.py
++++ b/freevideo_engine/modern_launcher.py
+@@ -59,6 +59,8 @@
+     app = QApplication.instance() or QApplication([sys.argv[0]])
+     app.setApplicationName('FreeVideo')
+     app.setOrganizationName('FreeVideo')
++    if os.environ.get('SNAP'):
++        app.setDesktopFileName('freevideo_freevideo')
+     app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
+     font = QFont()
+     families = ['Segoe UI', 'Microsoft YaHei UI', 'Noto Sans', 'Noto Sans CJK SC']

@@ -1,0 +1,89 @@
+name: freevideo
+base: core24
+version: '0.4.30'
+title: FreeVideo
+icon: snap/gui/freevideo.png
+summary: Create AI videos with a desktop launcher and ComfyUI workspace
+description: |
+  FreeVideo generates video and audio with a local NVIDIA GPU. Its desktop
+  launcher installs a compatible ComfyUI environment and opens the FreeVideo
+  workspace in your browser, with a timeline editor and model management.
+
+  Launch FreeVideo from the application menu, choose an installation folder,
+  and select Install & launch. CUDA dependencies and models download on demand
+  into the snap's user data. An NVIDIA Ampere GPU or newer, driver 580 or newer,
+  at least 8 GB VRAM and 16 GB RAM are required for local generation.
+license: Apache-2.0
+grade: stable
+confinement: strict
+website: https://www.flashml.ai/
+source-code:
+  - https://github.com/FlashML-org/FreeVideo
+  - https://github.com/sidalit/freevideo-snap
+issues:
+  - https://github.com/FlashML-org/FreeVideo/issues
+  - https://github.com/sidalit/freevideo-snap/issues
+contact: https://github.com/sidalit/freevideo-snap/issues
+
+platforms:
+  amd64:
+
+apps:
+  freevideo:
+    command: bin/freevideo
+    extensions: [gnome]
+    plugs:
+      - home
+      - network
+      - network-bind
+      - removable-media
+
+parts:
+  freevideo:
+    plugin: nil
+    source: https://github.com/FlashML-org/FreeVideo.git
+    source-tag: v$SNAPCRAFT_PROJECT_VERSION
+    source-depth: 1
+    build-packages:
+      - patch
+    override-pull: |
+      craftctl default
+      patch -p1 < "$CRAFT_PROJECT_DIR/snap/patches/snap.patch"
+    override-build: |
+      mkdir -p "$CRAFT_PART_INSTALL/opt/freevideo"
+      cp -a freevideo_engine web constraints example_workflows scripts \
+        pyproject.toml README.md MANIFEST.in __init__.py \
+        freevideo freevideo.ps1 freevideo.cmd setup.sh setup.ps1 setup.cmd \
+        test.sh test.ps1 test.cmd freevideo_source_bootstrap.py \
+        freevideo_ed25519.py freevideo_update_keys.py \
+        LICENSE NOTICE THIRD_PARTY_NOTICES.md "$CRAFT_PART_INSTALL/opt/freevideo/"
+      install -Dm644 LICENSE "$CRAFT_PART_INSTALL/share/doc/freevideo/LICENSE"
+
+  launcher-runtime:
+    after: [freevideo]
+    plugin: nil
+    build-packages:
+      - python3-venv
+    stage-packages:
+      - curl
+      - libxcb-cursor0
+      - libxcb-icccm4
+      - libxcb-image0
+      - libxcb-keysyms1
+      - libxcb-render-util0
+      - libxkbcommon-x11-0
+    override-build: |
+      /usr/bin/python3 -m venv "$CRAFT_PART_INSTALL/opt/launcher"
+      "$CRAFT_PART_INSTALL/opt/launcher/bin/pip" install --no-cache-dir --no-compile \
+        -c "$CRAFT_STAGE/opt/freevideo/constraints/linux-launcher.txt" \
+        PySide6-Essentials psutil
+      rm -rf "$CRAFT_PART_INSTALL/opt/launcher/lib/python3.12/site-packages/pip" \
+        "$CRAFT_PART_INSTALL/opt/launcher/lib/python3.12/site-packages/"pip-*.dist-info
+      rm -f "$CRAFT_PART_INSTALL/opt/launcher/bin/"pip*
+    prime:
+      - -usr/share/doc
+      - -usr/share/man
+
+  launcher:
+    plugin: dump
+    source: snap/local

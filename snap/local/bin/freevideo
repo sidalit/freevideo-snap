@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+export HOME="$SNAP_USER_COMMON"
+export FREEVIDEO_HOME="$SNAP_USER_COMMON/engine"
+export FREEVIDEO_LAUNCHER_HOME="$SNAP_USER_COMMON/launcher"
+export XDG_CONFIG_HOME="$SNAP_USER_COMMON/.config"
+export XDG_CACHE_HOME="$SNAP_USER_COMMON/.cache"
+export XDG_DATA_HOME="$SNAP_USER_COMMON/.local/share"
+export PATH="$SNAP/usr/bin:$PATH"
+export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export TRITON_LIBCUDA_PATH=/var/lib/snapd/lib/gl
+export PYTHONPATH="$SNAP/opt/freevideo"
+export PYTHONNOUSERSITE=1
+export PYTHONDONTWRITEBYTECODE=1
+
+mkdir -p "$FREEVIDEO_HOME" "$FREEVIDEO_LAUNCHER_HOME" \
+  "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME"
+exec "$SNAP/opt/launcher/bin/python3" -m freevideo_engine.modern_launcher "$@"
