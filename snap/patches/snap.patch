@@ -48,14 +48,3 @@
              update=update, engine_update_available=bool(row.get('engine_update_available')),
              settings_path=str(self.store.primary),
              review_id=row.get('plan', {}).get('plan_id', ''),
---- a/freevideo_engine/modern_launcher.py
-+++ b/freevideo_engine/modern_launcher.py
-@@ -59,6 +59,8 @@
-     app = QApplication.instance() or QApplication([sys.argv[0]])
-     app.setApplicationName('FreeVideo')
-     app.setOrganizationName('FreeVideo')
-+    if os.environ.get('SNAP'):
-+        app.setDesktopFileName('freevideo_freevideo')
-     app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
-     font = QFont()
-     families = ['Segoe UI', 'Microsoft YaHei UI', 'Noto Sans', 'Noto Sans CJK SC']
