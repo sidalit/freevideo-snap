@@ -1,6 +1,6 @@
 name: freevideo
 base: core24
-version: '0.6.2'
+version: '0.6.5'
 title: FreeVideo
 icon: snap/gui/freevideo.png
 summary: Create AI videos with a desktop launcher and ComfyUI workspace
